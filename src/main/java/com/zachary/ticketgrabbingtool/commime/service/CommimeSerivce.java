@@ -1,11 +1,10 @@
 package com.zachary.ticketgrabbingtool.commime.service;
 
-import com.zachary.ticketgrabbingtool.commime.model.ProductModel;
+import com.zachary.ticketgrabbingtool.commime.model.ProductRequestModel;
 import com.zachary.ticketgrabbingtool.commime.model.UserDetailModel;
-import com.zachary.ticketgrabbingtool.commime.model.UserModel;
+import com.zachary.ticketgrabbingtool.commime.model.UserRequestModel;
 import com.zachary.ticketgrabbingtool.httpclient.MyHttpClient;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
@@ -23,7 +22,10 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class CommimeSerivce {
@@ -41,8 +43,8 @@ public class CommimeSerivce {
         System.out.println("-> 初始化cookie");
         HashMap<String, Object> resMap = myHttpClient.doGet(URL, null);
         HttpResponse response = (HttpResponse) resMap.get("response");
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != HttpStatus.SC_OK) throw new Exception("無法進入首頁");
+        String errorMsg = "無法進入首頁";
+        myHttpClient.checkResponse(response, errorMsg);
         return resMap;
     }
 
@@ -59,32 +61,26 @@ public class CommimeSerivce {
         userDetailModel.setLocale_code(localeCode);
         userDetailModel.setPassword((String) json.get("password"));
         userDetailModel.setMobile_phone_or_email((String) json.get("mobile_phone_or_email"));
-        UserModel userModel = new UserModel();
-        userModel.setUser(userDetailModel);
-        System.out.println(userModel.toString());
+        UserRequestModel userRequestModel = new UserRequestModel();
+        userRequestModel.setUser(userDetailModel);
+        System.out.println(userRequestModel.toString());
 
-        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, userModel.toString());
+        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, userRequestModel.toString());
         HttpResponse response = (HttpResponse) resMap.get("response");
-
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != 200) throw new Exception("登入失敗");
-        if (response.getHeaders("set-cookie") == null) throw new Exception("無法取得cookie");
-        System.out.println(response.getHeaders("set-cookie")[0].getValue());
-
+        String errorMsg = "登入失敗";
+        myHttpClient.checkResponse(response, errorMsg);
         return resMap;
     }
 
-    public HashMap<String, Object> addItem(HashMap<String, Object> sourceResMap, ProductModel productModel) throws Exception {
+    public HashMap<String, Object> addItem(HashMap<String, Object> sourceResMap, ProductRequestModel productRequestModel) throws Exception {
         String url = URL + "/api/merchants/606fc211e91c7400679f7d06/cart/items";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
-        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, productModel.toString());
+        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, productRequestModel.toString());
         HttpResponse response = (HttpResponse) resMap.get("response");
-
+        String errorMsg = "無法將" + productRequestModel.getProduct_id() + "加入購物車";
+        myHttpClient.checkResponse(response, errorMsg);
         System.out.println(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
-
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != 200) throw new Exception("無法將" + productModel.getProduct_id() + "加入購物車");
-        System.out.println("已成功將" + productModel.getProduct_id() + "加入購物車");
+        System.out.println("已成功將" + productRequestModel.getProduct_id() + "加入購物車");
         return resMap;
     }
 
@@ -96,11 +92,11 @@ public class CommimeSerivce {
 
         HashMap<String, Object> resMap = sourceResMap;
         for (int i = 0; i < jsonArr.size(); i++) {
-            ProductModel productModel = new ProductModel();
+            ProductRequestModel productRequestModel = new ProductRequestModel();
             JSONObject productJson = (JSONObject) jsonArr.get(i);
-            productModel.setProduct_id((String) productJson.get("product_id"));
-            productModel.setQuantity(((Long) productJson.get("quantity")).intValue());
-            resMap = addItem(resMap, productModel);
+            productRequestModel.setProduct_id((String) productJson.get("product_id"));
+            productRequestModel.setQuantity(((Long) productJson.get("quantity")).intValue());
+            resMap = addItem(resMap, productRequestModel);
         }
         return resMap;
     }
@@ -111,10 +107,9 @@ public class CommimeSerivce {
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
         HashMap<String, Object> resMap = myHttpClient.doGet(URL, headerMap);
         HttpResponse response = (HttpResponse) resMap.get("response");
+        String errorMsg = "無法查詢購物車資訊";
+        myHttpClient.checkResponse(response, errorMsg);
 //        System.out.println(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
-        System.out.println(response.getStatusLine());
-//        int statusCode = response.getStatusLine().getStatusCode();
-//        if (statusCode != HttpStatus.SC_OK) throw new Exception("無法進入首頁");
         return resMap;
     }
 
@@ -122,17 +117,15 @@ public class CommimeSerivce {
         System.out.println("-> 登出");
         String url = URL + "/signout";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
-
         HashMap<String, Object> resMap = myHttpClient.doGet(url, headerMap);
         HttpResponse response = (HttpResponse) resMap.get("response");
-
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != 200) throw new Exception("登出失敗");
-        System.out.println(response.getStatusLine());
+//        String errorMsg = "登出失敗";
+//        myHttpClient.checkResponse(response, errorMsg);
     }
 
     private HashMap<String, Object> prepareHeaderParams(HashMap<String, Object> resMap) throws Exception {
         HashMap<String, Object> headerMap = new HashMap<>();
+        List<HashMap<String, String>> headerList = new ArrayList<>();
 
         HttpResponse response = (HttpResponse) resMap.get("response");
         if (response == null) throw new Exception("response為空");
@@ -152,10 +145,12 @@ public class CommimeSerivce {
             cookieStore.addCookie(cookie);
         }
 
-        headerMap.put("cookieStore", cookieStore);
-        headerMap.put("x-csrf-token", csrfToken);
-        headerMap.put("x-xsrf-token", xsrfToken);
+        headerList.add(new HashMap<String, String>(Map.of("key","x-csrf-token", "value", csrfToken)));
+        headerList.add(new HashMap<String, String>(Map.of("key","x-xsrf-token", "value", xsrfToken)));
 
+        headerMap.put("cookieStore", cookieStore);
+        headerMap.put("headerList", headerList);
         return headerMap;
     }
+
 }

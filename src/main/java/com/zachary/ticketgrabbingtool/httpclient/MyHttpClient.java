@@ -1,5 +1,7 @@
 package com.zachary.ticketgrabbingtool.httpclient;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -13,6 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 
 @Component
 public class MyHttpClient {
@@ -34,9 +37,14 @@ public class MyHttpClient {
         RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
         request.setConfig(requestConfig);
 
+        if (headerMap != null && headerMap.containsKey("headerList") && headerMap.get("headerList") != null) {
+            for(HashMap<String, String> headerItem: (List<HashMap>) headerMap.get("headerList")) {
+                request.setHeader(headerItem.get("key"), headerItem.get("value"));
+            }
+        }
+
         resMap.put("response", client.execute(request, context));
         resMap.put("context", context);
-
         return resMap;
     }
 
@@ -52,8 +60,11 @@ public class MyHttpClient {
         RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
         request.setConfig(requestConfig);
 
-        request.setHeader("x-csrf-token", (String) headerMap.get("x-csrf-token"));
-        request.setHeader("x-xsrf-token", (String) headerMap.get("x-xsrf-token"));
+        if (headerMap.containsKey("headerList") && headerMap.get("headerList") != null) {
+            for(HashMap<String, String> headerItem: (List<HashMap>) headerMap.get("headerList")) {
+                request.setHeader(headerItem.get("key"), headerItem.get("value"));
+            }
+        }
 
         if (jsonStr != null) {
             request.setHeader("Accept", "application/json");
@@ -66,7 +77,13 @@ public class MyHttpClient {
 
         resMap.put("response", client.execute(request, context));
         resMap.put("context", context);
-
         return resMap;
+    }
+
+    public void checkResponse(HttpResponse response, String errorMsg) throws Exception {
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != HttpStatus.SC_OK) throw new Exception(errorMsg);
+        if (response.getHeaders("set-cookie") == null) throw new Exception("無法取得cookie");
+        System.out.println(response.getHeaders("set-cookie")[0].getValue());
     }
 }
