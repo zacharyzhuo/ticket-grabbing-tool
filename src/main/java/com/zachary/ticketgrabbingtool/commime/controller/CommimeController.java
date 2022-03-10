@@ -7,29 +7,31 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 @RestController
+@RequestMapping("/commime")
 public class CommimeController {
 
     @Autowired
     private CommimeSerivce commimeService;
 
-    @RequestMapping("/")
+    @RequestMapping(value = "/", method = RequestMethod.GET)
     public String hello() {
 
         try {
 
             HashMap<String, Object> initResMap = commimeService.initCookie();
             HashMap<String, Object> loginResMap = commimeService.signIn(initResMap);
-            HashMap<String, Object> getCartInfoResMap = commimeService.getCartInfo(loginResMap);
+//            HashMap<String, Object> getCartInfoResMap = commimeService.getCartInfo(loginResMap);
 //            HashMap<String, Object> doAddItemsResMap = commimeService.doAddItems(loginResMap);
 //            HttpResponse response = (HttpResponse) doAddItemsResMap.get("response");
 //            System.out.println(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
-            commimeService.signOut(getCartInfoResMap);
+            commimeService.signOut(loginResMap);
 
 //            HttpResponse response = (HttpResponse) loginResMap.get("response");
 //            return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
