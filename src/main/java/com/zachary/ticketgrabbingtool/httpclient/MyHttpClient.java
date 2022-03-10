@@ -1,5 +1,6 @@
 package com.zachary.ticketgrabbingtool.httpclient;
 
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -8,30 +9,47 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
+import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 @Component
 public class MyHttpClient {
 
-    public HashMap<String, Object> doGet(String url, HashMap<String, Object> headerMap) throws Exception {
+    public HashMap<String, Object> doGet(String url, String paramJson, HashMap<String, Object> headerMap) throws Exception {
         // 存放response & context
         HashMap<String, Object> resMap = new HashMap<>();
         HttpClient client = null;
-        if (headerMap != null) {
+        if (headerMap != null && headerMap.containsKey("cookieStore") && headerMap.get("cookieStore") != null) {
             BasicCookieStore cookieStore = (BasicCookieStore) headerMap.get("cookieStore");
             client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
         } else {
             client = HttpClients.createDefault();
         }
         HttpClientContext context = HttpClientContext.create();
-        HttpGet request = new HttpGet(url);
+        HttpGet request = null;
+
+        if (paramJson == null || paramJson.isEmpty()) {
+            request = new HttpGet(url);
+        } else {
+            URIBuilder builder = new URIBuilder(url);
+            request = new HttpGet(builder.build());
+
+            JSONObject paramJsonObject = new JSONObject(paramJson);
+            Iterator<String> it = paramJsonObject.keySet().iterator();
+            while (it.hasNext()) {
+                String key = it.next();
+                builder.setParameter(key, (String) paramJsonObject.get(key));
+            }
+        }
 
         // 修改cookie策略，避免Invalid cookie header警告
         RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
@@ -60,7 +78,7 @@ public class MyHttpClient {
         RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
         request.setConfig(requestConfig);
 
-        if (headerMap.containsKey("headerList") && headerMap.get("headerList") != null) {
+        if (headerMap != null && headerMap.containsKey("headerList") && headerMap.get("headerList") != null) {
             for(HashMap<String, String> headerItem: (List<HashMap>) headerMap.get("headerList")) {
                 request.setHeader(headerItem.get("key"), headerItem.get("value"));
             }
@@ -84,6 +102,6 @@ public class MyHttpClient {
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != HttpStatus.SC_OK) throw new Exception(errorMsg);
         if (response.getHeaders("set-cookie") == null) throw new Exception("無法取得cookie");
-        System.out.println(response.getHeaders("set-cookie")[0].getValue());
+        for(Header header: response.getHeaders("set-cookie")) System.out.println(header.getValue());
     }
 }

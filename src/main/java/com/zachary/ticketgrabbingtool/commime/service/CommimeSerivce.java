@@ -9,9 +9,8 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.util.EntityUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,7 @@ public class CommimeSerivce {
 
     public HashMap<String, Object> initCookie() throws Exception {
         System.out.println("-> 初始化cookie");
-        HashMap<String, Object> resMap = myHttpClient.doGet(URL, null);
+        HashMap<String, Object> resMap = myHttpClient.doGet(URL, null, null);
         HttpResponse response = (HttpResponse) resMap.get("response");
         String errorMsg = "無法進入首頁";
         myHttpClient.checkResponse(response, errorMsg);
@@ -55,7 +54,8 @@ public class CommimeSerivce {
 
         File jsonFile = new ClassPathResource("/commime/user.json").getFile();
         String jsonText = new String(Files.readAllBytes(jsonFile.toPath()));
-        JSONObject json = (JSONObject) new JSONParser().parse(jsonText);
+        JSONObject json = new JSONObject(jsonText);
+//        JSONObject json = (JSONObject) new JSONParser().parse(jsonText);
 
         UserDetailModel userDetailModel = new UserDetailModel();
         userDetailModel.setLocale_code(localeCode);
@@ -88,10 +88,10 @@ public class CommimeSerivce {
         System.out.println("-> 將商品加入購物車");
         File jsonFile = new ClassPathResource("/commime/product.json").getFile();
         String jsonText = new String(Files.readAllBytes(jsonFile.toPath()));
-        JSONArray jsonArr = (JSONArray) new JSONParser().parse(jsonText);
+        JSONArray jsonArr = new JSONArray(jsonText);
 
         HashMap<String, Object> resMap = sourceResMap;
-        for (int i = 0; i < jsonArr.size(); i++) {
+        for (int i = 0; i < jsonArr.length(); i++) {
             ProductRequestModel productRequestModel = new ProductRequestModel();
             JSONObject productJson = (JSONObject) jsonArr.get(i);
             productRequestModel.setProduct_id((String) productJson.get("product_id"));
@@ -105,7 +105,7 @@ public class CommimeSerivce {
         System.out.println("-> 查詢購物車資訊");
         String url = URL + "/api/merchants/606fc211e91c7400679f7d06/cart";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
-        HashMap<String, Object> resMap = myHttpClient.doGet(URL, headerMap);
+        HashMap<String, Object> resMap = myHttpClient.doGet(URL, null, headerMap);
         HttpResponse response = (HttpResponse) resMap.get("response");
         String errorMsg = "無法查詢購物車資訊";
         myHttpClient.checkResponse(response, errorMsg);
@@ -117,7 +117,7 @@ public class CommimeSerivce {
         System.out.println("-> 登出");
         String url = URL + "/signout";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
-        HashMap<String, Object> resMap = myHttpClient.doGet(url, headerMap);
+        HashMap<String, Object> resMap = myHttpClient.doGet(url, null, headerMap);
         HttpResponse response = (HttpResponse) resMap.get("response");
 //        String errorMsg = "登出失敗";
 //        myHttpClient.checkResponse(response, errorMsg);
