@@ -1,8 +1,8 @@
 package com.zachary.ticketgrabbingtool.commime.service;
 
-import com.zachary.ticketgrabbingtool.commime.model.ProductRequestModel;
+import com.zachary.ticketgrabbingtool.commime.model.ProductModel;
 import com.zachary.ticketgrabbingtool.commime.model.UserDetailModel;
-import com.zachary.ticketgrabbingtool.commime.model.UserRequestModel;
+import com.zachary.ticketgrabbingtool.commime.model.UserModel;
 import com.zachary.ticketgrabbingtool.httpclient.MyHttpClient;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.protocol.HttpClientContext;
@@ -47,40 +47,29 @@ public class CommimeSerivce {
         return resMap;
     }
 
-    public HashMap<String, Object> signIn(HashMap<String, Object> sourceResMap) throws Exception {
+    public HashMap<String, Object> signIn(HashMap<String, Object> sourceResMap, UserModel userModel) throws Exception {
         System.out.println("-> 登入並取得新cookie");
         String url = URL + "/api/users/sign_in";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
 
-        File jsonFile = new ClassPathResource("/commime/user.json").getFile();
-        String jsonText = new String(Files.readAllBytes(jsonFile.toPath()));
-        JSONObject json = new JSONObject(jsonText);
-//        JSONObject json = (JSONObject) new JSONParser().parse(jsonText);
+        userModel.getUser().setLocale_code(localeCode);
 
-        UserDetailModel userDetailModel = new UserDetailModel();
-        userDetailModel.setLocale_code(localeCode);
-        userDetailModel.setPassword((String) json.get("password"));
-        userDetailModel.setMobile_phone_or_email((String) json.get("mobile_phone_or_email"));
-        UserRequestModel userRequestModel = new UserRequestModel();
-        userRequestModel.setUser(userDetailModel);
-        System.out.println(userRequestModel.toString());
-
-        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, userRequestModel.toString());
+        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, userModel.toString());
         HttpResponse response = (HttpResponse) resMap.get("response");
         String errorMsg = "登入失敗";
         myHttpClient.checkResponse(response, errorMsg);
         return resMap;
     }
 
-    public HashMap<String, Object> addItem(HashMap<String, Object> sourceResMap, ProductRequestModel productRequestModel) throws Exception {
+    public HashMap<String, Object> addItem(HashMap<String, Object> sourceResMap, ProductModel productModel) throws Exception {
         String url = URL + "/api/merchants/606fc211e91c7400679f7d06/cart/items";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
-        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, productRequestModel.toString());
+        HashMap<String, Object> resMap = myHttpClient.doPost(url, headerMap, productModel.toString());
         HttpResponse response = (HttpResponse) resMap.get("response");
-        String errorMsg = "無法將" + productRequestModel.getProduct_id() + "加入購物車";
+        String errorMsg = "無法將" + productModel.getProduct_id() + "加入購物車";
         myHttpClient.checkResponse(response, errorMsg);
         System.out.println(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
-        System.out.println("已成功將" + productRequestModel.getProduct_id() + "加入購物車");
+        System.out.println("已成功將" + productModel.getProduct_id() + "加入購物車");
         return resMap;
     }
 
@@ -92,11 +81,11 @@ public class CommimeSerivce {
 
         HashMap<String, Object> resMap = sourceResMap;
         for (int i = 0; i < jsonArr.length(); i++) {
-            ProductRequestModel productRequestModel = new ProductRequestModel();
+            ProductModel productModel = new ProductModel();
             JSONObject productJson = (JSONObject) jsonArr.get(i);
-            productRequestModel.setProduct_id((String) productJson.get("product_id"));
-            productRequestModel.setQuantity(((Long) productJson.get("quantity")).intValue());
-            resMap = addItem(resMap, productRequestModel);
+            productModel.setProduct_id((String) productJson.get("product_id"));
+            productModel.setQuantity(((Long) productJson.get("quantity")).intValue());
+            resMap = addItem(resMap, productModel);
         }
         return resMap;
     }
