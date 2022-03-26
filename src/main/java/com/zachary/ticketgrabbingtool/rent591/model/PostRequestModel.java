@@ -205,5 +205,5 @@ public class PostRequestModel extends AbstractEntity {
     public void setOrderType(String orderType) {
         this.orderType = orderType;
     }
-    
+
 }

@@ -4,34 +4,36 @@ import com.zachary.ticketgrabbingtool.commime.model.OrderModel;
 import com.zachary.ticketgrabbingtool.commime.model.ProductsModel;
 import com.zachary.ticketgrabbingtool.commime.model.UserModel;
 import com.zachary.ticketgrabbingtool.commime.service.CommimeSerivce;
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 @RestController
 @RequestMapping("/commime")
 public class CommimeController {
 
+    private static final Logger logger = LoggerFactory.getLogger(CommimeController.class);
+
     @Autowired
     private CommimeSerivce commimeService;
 
     @RequestMapping(value = "/buy", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public String buy(@RequestBody OrderModel orderModel) {
+    public @ResponseBody ResponseEntity<?> buy(@RequestBody OrderModel orderModel) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("content-type", "text/html; charset=utf-8");
+
+        UserModel userModel = orderModel.getUser();
+        ProductsModel productsModel = orderModel.getProducts();
+
         try {
-
-            UserModel userModel = orderModel.getUser();
-            ProductsModel productsModel = orderModel.getProducts();
-
             HashMap<String, Object> initResMap = commimeService.initCookie();
             HashMap<String, Object> loginResMap = commimeService.signIn(initResMap, userModel);
 //            HashMap<String, Object> getCartInfoResMap = commimeService.getCartInfo(loginResMap);
@@ -42,12 +44,10 @@ public class CommimeController {
 
 //            HttpResponse response = (HttpResponse) loginResMap.get("response");
 //            return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            return "OK";
+            return new ResponseEntity<>("ok", headers, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
-            return("[error]: " + e.getStackTrace());
+            logger.error(ExceptionUtils.getStackTrace(e));
+            return new ResponseEntity<>(ExceptionUtils.getStackTrace(e), headers, HttpStatus.BAD_REQUEST);
         }
-
-//        return new ResponseEntity<>("hello", HttpStatus.OK);
     }
 }

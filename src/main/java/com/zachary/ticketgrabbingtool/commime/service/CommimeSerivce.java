@@ -1,7 +1,6 @@
 package com.zachary.ticketgrabbingtool.commime.service;
 
 import com.zachary.ticketgrabbingtool.commime.model.ProductModel;
-import com.zachary.ticketgrabbingtool.commime.model.UserDetailModel;
 import com.zachary.ticketgrabbingtool.commime.model.UserModel;
 import com.zachary.ticketgrabbingtool.httpclient.MyHttpClient;
 import org.apache.http.HttpResponse;
@@ -13,6 +12,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -29,6 +30,8 @@ import java.util.Map;
 @Service
 public class CommimeSerivce {
 
+    private static final Logger logger = LoggerFactory.getLogger(CommimeSerivce.class);
+
     @Value("${commime.url}")
     private String URL;
 
@@ -39,7 +42,7 @@ public class CommimeSerivce {
     private MyHttpClient myHttpClient;
 
     public HashMap<String, Object> initCookie() throws Exception {
-        System.out.println("-> 初始化cookie");
+        logger.info("初始化cookie");
         HashMap<String, Object> resMap = myHttpClient.doGet(URL, null, null);
         HttpResponse response = (HttpResponse) resMap.get("response");
         String errorMsg = "無法進入首頁";
@@ -48,7 +51,7 @@ public class CommimeSerivce {
     }
 
     public HashMap<String, Object> signIn(HashMap<String, Object> sourceResMap, UserModel userModel) throws Exception {
-        System.out.println("-> 登入並取得新cookie");
+        logger.info("登入並取得新cookie");
         String url = URL + "/api/users/sign_in";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
 
@@ -68,13 +71,13 @@ public class CommimeSerivce {
         HttpResponse response = (HttpResponse) resMap.get("response");
         String errorMsg = "無法將" + productModel.getProduct_id() + "加入購物車";
         myHttpClient.checkResponse(response, errorMsg);
-        System.out.println(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
-        System.out.println("已成功將" + productModel.getProduct_id() + "加入購物車");
+        logger.info(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
+        logger.info("已成功將" + productModel.getProduct_id() + "加入購物車");
         return resMap;
     }
 
     public HashMap<String, Object> doAddItems(HashMap<String, Object> sourceResMap) throws Exception {
-        System.out.println("-> 將商品加入購物車");
+        logger.info("將商品加入購物車");
         File jsonFile = new ClassPathResource("/commime/product.json").getFile();
         String jsonText = new String(Files.readAllBytes(jsonFile.toPath()));
         JSONArray jsonArr = new JSONArray(jsonText);
@@ -91,19 +94,19 @@ public class CommimeSerivce {
     }
 
     public HashMap<String, Object> getCartInfo(HashMap<String, Object> sourceResMap) throws Exception {
-        System.out.println("-> 查詢購物車資訊");
+        logger.info("查詢購物車資訊");
         String url = URL + "/api/merchants/606fc211e91c7400679f7d06/cart";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
         HashMap<String, Object> resMap = myHttpClient.doGet(URL, null, headerMap);
         HttpResponse response = (HttpResponse) resMap.get("response");
         String errorMsg = "無法查詢購物車資訊";
         myHttpClient.checkResponse(response, errorMsg);
-//        System.out.println(EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
+//        logger.info("CommimeSerivce: " + EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8));
         return resMap;
     }
 
     public void signOut(HashMap<String, Object> sourceResMap) throws Exception {
-        System.out.println("-> 登出");
+        logger.info("登出");
         String url = URL + "/signout";
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
         HashMap<String, Object> resMap = myHttpClient.doGet(url, null, headerMap);

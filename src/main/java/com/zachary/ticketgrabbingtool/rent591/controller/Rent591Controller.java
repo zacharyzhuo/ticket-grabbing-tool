@@ -3,6 +3,9 @@ package com.zachary.ticketgrabbingtool.rent591.controller;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
 import com.zachary.ticketgrabbingtool.rent591.service.Rent591Service;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,6 +17,8 @@ import java.util.HashMap;
 @RestController()
 @RequestMapping("/rent591")
 public class Rent591Controller {
+
+    private static final Logger logger = LoggerFactory.getLogger(Rent591Controller.class);
 
     @Autowired
     Rent591Service rent591Service;
@@ -35,8 +40,8 @@ public class Rent591Controller {
             PostsModel postsModel = (PostsModel) postsResMap.get("postsModel");
             return new ResponseEntity<>(postsModel.getPost().toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(e.getStackTrace(), headers, HttpStatus.BAD_REQUEST);
+            logger.error(ExceptionUtils.getStackTrace(e));
+            return new ResponseEntity<>(ExceptionUtils.getStackTrace(e), headers, HttpStatus.BAD_REQUEST);
         }
 
     }
@@ -65,8 +70,8 @@ public class Rent591Controller {
             postsModel = (PostsModel) postsResMap.get("postsModel");
             return new ResponseEntity<>(postsModel.getPost().toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(e.getStackTrace(), headers, HttpStatus.BAD_REQUEST);
+            logger.error(ExceptionUtils.getStackTrace(e));
+            return new ResponseEntity<>(ExceptionUtils.getStackTrace(e), headers, HttpStatus.BAD_REQUEST);
         }
     }
 

@@ -7,24 +7,24 @@ import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.util.EntityUtils;
-import org.apache.tomcat.util.json.JSONParser;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
 public class Rent591Service {
+
+    private static final Logger logger = LoggerFactory.getLogger(Rent591Service.class);
 
     @Value("${rent591.url}")
     private String URL;
@@ -35,7 +35,7 @@ public class Rent591Service {
     private MyHttpClient myHttpClient;
 
     public HashMap<String, Object> initCookie() throws Exception {
-        System.out.println("-> 初始化cookie");
+        logger.info("初始化cookie");
         HashMap<String, Object> headerMap = new HashMap<>();
         headerMap.put("headerList", new ArrayList<>(
             Arrays.asList(new HashMap<String, String>(
@@ -49,7 +49,7 @@ public class Rent591Service {
     }
 
     public HashMap<String, Object> getPosts(HashMap<String, Object> sourceResMap, PostRequestModel postRequestModel) throws Exception {
-        System.out.println("-> 取得前30篇貼文");
+        logger.info("取得前30篇貼文");
         String url = URL + "/home/search/rsList";
         PostsModel postsModel;
         HashMap<String, Object> headerMap;

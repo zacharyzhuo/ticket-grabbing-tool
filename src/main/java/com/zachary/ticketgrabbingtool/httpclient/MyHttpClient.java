@@ -15,6 +15,8 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -23,6 +25,8 @@ import java.util.List;
 
 @Component
 public class MyHttpClient {
+
+    private static final Logger logger = LoggerFactory.getLogger(MyHttpClient.class);
 
     public HashMap<String, Object> doGet(String url, String paramJson, HashMap<String, Object> headerMap) throws Exception {
         // 存放response & context
@@ -102,6 +106,8 @@ public class MyHttpClient {
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode != HttpStatus.SC_OK) throw new Exception(errorMsg);
         if (response.getHeaders("set-cookie") == null) throw new Exception("無法取得cookie");
-        for(Header header: response.getHeaders("set-cookie")) System.out.println(header.getValue());
+        for (Header header: response.getHeaders("set-cookie")) {
+            logger.info(header.getValue().toString());
+        }
     }
 }
