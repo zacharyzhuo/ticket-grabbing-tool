@@ -47,6 +47,13 @@ public class PostRequestModel extends AbstractEntity {
     private String multiNotice;
     // -----------------------
 
+    // 排序 -------------------
+    // [排序標準] 最新：posttime, 租金：money 坪數：area
+    private String order;
+    // [排序方式] desc, asc
+    private String orderType;
+    // ------------------------
+
     public String getIs_format_data() {
         return is_format_data;
     }
@@ -183,4 +190,20 @@ public class PostRequestModel extends AbstractEntity {
         this.multiNotice = multiNotice;
     }
 
+    public String getOrder() {
+        return order;
+    }
+
+    public void setOrder(String order) {
+        this.order = order;
+    }
+
+    public String getOrderType() {
+        return orderType;
+    }
+
+    public void setOrderType(String orderType) {
+        this.orderType = orderType;
+    }
+    
 }
