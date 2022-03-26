@@ -1,13 +1,17 @@
 package com.zachary.ticketgrabbingtool.rent591.service;
 
 import com.zachary.ticketgrabbingtool.httpclient.MyHttpClient;
+import com.zachary.ticketgrabbingtool.rent591.model.PostModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
+import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.util.EntityUtils;
+import org.apache.tomcat.util.json.JSONParser;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
@@ -42,29 +48,65 @@ public class Rent591Service {
         return resMap;
     }
 
-    public HashMap<String, Object> getPosts(HashMap<String, Object> sourceResMap) throws Exception {
+    public HashMap<String, Object> getPosts(HashMap<String, Object> sourceResMap, PostRequestModel postRequestModel) throws Exception {
         System.out.println("-> 取得前30篇貼文");
         String url = URL + "/home/search/rsList";
+        PostsModel postsModel;
+
+        if (sourceResMap.containsKey("postsModel")) {
+            postsModel = (PostsModel) sourceResMap.get("postsModel");
+            postRequestModel.setFirstRow(String.valueOf(postsModel.getFirstRow()));
+            postRequestModel.setTotalRows(String.valueOf(postsModel.getTotalRows()));
+        }
+
         HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
-
-        PostRequestModel postRequestModel = new PostRequestModel();
-        postRequestModel.setIs_format_data(1);
-        postRequestModel.setIs_new_list(1);
-        postRequestModel.setType(1);
-        postRequestModel.setRegion(1);
-
         HashMap<String, Object> resMap = myHttpClient.doGet(url, postRequestModel.toString(), headerMap);
 
         HttpResponse response = (HttpResponse) resMap.get("response");
         HttpEntity entity = response.getEntity();
-        String responseString = EntityUtils.toString(entity, "UTF-8");
-//        JSONObject paramJsonObject = (JSONObject) new JSONParser().parse(responseString);
-//        System.out.println(paramJsonObject.get("data"));
+        String responseString = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+        JSONObject paramJsonObject = new JSONObject(responseString);
+        JSONArray postList = (JSONArray) ((JSONObject) paramJsonObject.get("data")).get("data");
 
+        List<PostModel> PostModelList = new ArrayList<>();
+        postList.forEach(postInfoObject -> {
+            JSONObject postInfo = (JSONObject) postInfoObject;
+            PostModel postModel = new PostModel();
+            postModel.setPostId((int) postInfo.get("post_id"));
+            postModel.setTitle((String) postInfo.get("title"));
+            postModel.setKind((String) postInfo.get("kind_name"));
+            postModel.setFloor((String) postInfo.get("floor_str"));
+            postModel.setPrice((String) postInfo.get("price"));
+            postModel.setArea((String) postInfo.get("area"));
+            postModel.setSection((String) postInfo.get("section_name"));
+            postModel.setStreet((String) postInfo.get("street_name"));
+            postModel.setLocation((String) postInfo.get("location"));
 
-        System.out.println(responseString);
+            List<String> photoUrlList = new ArrayList<>();
+            for (Object photoURL : (JSONArray) postInfo.get("photo_list")) {
+                photoUrlList.add((String) photoURL);
+            }
+            postModel.setPhotoList(photoUrlList);
+            PostModelList.add(postModel);
+        });
+
+        if (!sourceResMap.containsKey("postsModel")) {
+            int records = Integer.valueOf((String) paramJsonObject.get("records"));
+            postsModel = new PostsModel();
+            postsModel.setFirstRow(PostsModel.A_BATCH_POST_UNIT);
+            postsModel.setTotalRows(records);
+            postsModel.setPost(PostModelList);
+        } else {
+            postsModel = (PostsModel) sourceResMap.get("postsModel");
+            int firstRow = postsModel.getFirstRow() + PostsModel.A_BATCH_POST_UNIT;
+            postsModel.setFirstRow(firstRow);
+            postsModel.addPost(PostModelList);
+        }
+
         String errorMsg = "無法取得貼文";
         myHttpClient.checkResponse(response, errorMsg);
+
+        resMap.put("postsModel", postsModel);
         return resMap;
     }
 
@@ -76,7 +118,7 @@ public class Rent591Service {
         if (response == null) throw new Exception("response為空");
 
         // get csrf-token
-        String text = EntityUtils.toString(response.getEntity(), "utf-8");
+        String text = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
         Document document = Jsoup.parse(text);
         String csrfToken = document.select("meta[name=csrf-token]").attr("content");
 

@@ -41,14 +41,14 @@ public class MyHttpClient {
             request = new HttpGet(url);
         } else {
             URIBuilder builder = new URIBuilder(url);
-            request = new HttpGet(builder.build());
-
             JSONObject paramJsonObject = new JSONObject(paramJson);
             Iterator<String> it = paramJsonObject.keySet().iterator();
             while (it.hasNext()) {
                 String key = it.next();
-                builder.setParameter(key, (String) paramJsonObject.get(key));
+                builder.setParameter(key, String.valueOf(paramJsonObject.get(key)));
             }
+
+            request = new HttpGet(builder.build());
         }
 
         // 修改cookie策略，避免Invalid cookie header警告

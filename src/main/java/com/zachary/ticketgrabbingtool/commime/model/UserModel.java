@@ -2,7 +2,7 @@ package com.zachary.ticketgrabbingtool.commime.model;
 
 import com.zachary.ticketgrabbingtool.json.AbstractEntity;
 
-public class UserRequestModel extends AbstractEntity {
+public class UserModel extends AbstractEntity {
     /**
      *
      */
