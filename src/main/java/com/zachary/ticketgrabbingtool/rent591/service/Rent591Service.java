@@ -52,14 +52,18 @@ public class Rent591Service {
         System.out.println("-> 取得前30篇貼文");
         String url = URL + "/home/search/rsList";
         PostsModel postsModel;
+        HashMap<String, Object> headerMap;
 
-        if (sourceResMap.containsKey("postsModel")) {
+        if (!sourceResMap.containsKey("postsModel")) {
+            headerMap = prepareHeaderParams(sourceResMap);
+        } else {
             postsModel = (PostsModel) sourceResMap.get("postsModel");
             postRequestModel.setFirstRow(String.valueOf(postsModel.getFirstRow()));
             postRequestModel.setTotalRows(String.valueOf(postsModel.getTotalRows()));
+
+            headerMap = getInfoFromHeader(sourceResMap);
         }
 
-        HashMap<String, Object> headerMap = prepareHeaderParams(sourceResMap);
         HashMap<String, Object> resMap = myHttpClient.doGet(url, postRequestModel.toString(), headerMap);
 
         HttpResponse response = (HttpResponse) resMap.get("response");
@@ -103,6 +107,9 @@ public class Rent591Service {
             postsModel.addPost(PostModelList);
         }
 
+        List<HashMap<String, String>> headerList = (ArrayList) headerMap.get("headerList");
+        resMap.put("X-CSRF-TOKEN", headerList.get(0).get("value"));
+
         String errorMsg = "無法取得貼文";
         myHttpClient.checkResponse(response, errorMsg);
 
@@ -123,18 +130,25 @@ public class Rent591Service {
         String csrfToken = document.select("meta[name=csrf-token]").attr("content");
 
         HttpClientContext context = (HttpClientContext) resMap.get("context");
-        BasicCookieStore cookieStore = new BasicCookieStore();
-        String xsrfToken = "";
-        for (Cookie cookie : context.getCookieStore().getCookies()) {
-            cookieStore.addCookie(cookie);
-        }
 
         headerList.add(new HashMap<String, String>(Map.of("key","X-CSRF-TOKEN", "value", csrfToken)));
         headerList.add(new HashMap<String, String>(Map.of("key","User-Agent", "value", USER_AGENT)));
 
-        headerMap.put("cookieStore", cookieStore);
+        headerMap.put("cookieStore", context.getCookieStore());
         headerMap.put("headerList", headerList);
         return headerMap;
     }
 
+    private HashMap<String, Object> getInfoFromHeader(HashMap<String, Object> resMap) throws Exception {
+        HashMap<String, Object> headerMap = new HashMap<>();
+        List<HashMap<String, String>> headerList = new ArrayList<>();
+
+        HttpClientContext context = (HttpClientContext) resMap.get("context");
+        headerList.add(new HashMap<String, String>(Map.of("key","X-CSRF-TOKEN", "value", (String) resMap.get("X-CSRF-TOKEN"))));
+        headerList.add(new HashMap<String, String>(Map.of("key","User-Agent", "value", USER_AGENT)));
+
+        headerMap.put("cookieStore", context.getCookieStore());
+        headerMap.put("headerList", headerList);
+        return headerMap;
+    }
 }
