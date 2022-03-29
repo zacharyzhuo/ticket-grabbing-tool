@@ -3,6 +3,8 @@ package com.zachary.ticketgrabbingtool.commime.service;
 import com.zachary.ticketgrabbingtool.commime.model.ProductModel;
 import com.zachary.ticketgrabbingtool.commime.model.UserModel;
 import com.zachary.ticketgrabbingtool.httpclient.MyHttpClient;
+import com.zachary.ticketgrabbingtool.resource.CONSTANT;
+import com.zachary.ticketgrabbingtool.resource.ConfigReader;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
@@ -32,11 +34,8 @@ public class CommimeSerivce {
 
     private static final Logger logger = LoggerFactory.getLogger(CommimeSerivce.class);
 
-    @Value("${commime.url}")
-    private String URL;
-
-    @Value("${commime.user.localeCode}")
-    private String localeCode;
+    private static final String URL = ConfigReader.getString(CONSTANT.COMMIME_URL);
+    private static final String localeCode = ConfigReader.getString(CONSTANT.COMMIME_USER_LOCALECODE);
 
     @Autowired
     private MyHttpClient myHttpClient;

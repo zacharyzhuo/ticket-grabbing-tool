@@ -1,5 +1,7 @@
 package com.zachary.ticketgrabbingtool.schedule.service;
 
+import com.zachary.ticketgrabbingtool.resource.CONSTANT;
+import com.zachary.ticketgrabbingtool.resource.ConfigReader;
 import com.zachary.ticketgrabbingtool.schedule.model.ScheduleJobModel;
 import com.zachary.ticketgrabbingtool.utils.DateUtil;
 
@@ -30,8 +32,7 @@ public class ScheduleDelegate {
 
     private Logger logger = LoggerFactory.getLogger(ScheduleDelegate.class);
 
-//    private static final boolean quartzClusterEnable = ConfigReader.getBoolean(CONSTANT.QUARTZ_CLUSTER_ENABLE);
-    private static final boolean quartzClusterEnable = false;
+    private static final boolean quartzClusterEnable = ConfigReader.getBoolean(CONSTANT.QUARTZ_CLUSTER_ENABLE);
 
     private static ScheduleDelegate instance;
 

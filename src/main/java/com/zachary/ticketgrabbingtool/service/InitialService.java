@@ -1,5 +1,7 @@
 package com.zachary.ticketgrabbingtool.service;
 
+import com.zachary.ticketgrabbingtool.resource.CONSTANT;
+import com.zachary.ticketgrabbingtool.resource.ConfigReader;
 import com.zachary.ticketgrabbingtool.schedule.model.NewPostsCheckJobModel;
 import com.zachary.ticketgrabbingtool.schedule.service.ScheduleDelegate;
 import org.slf4j.Logger;
@@ -16,9 +18,9 @@ public class InitialService {
 
     private Logger logger = LoggerFactory.getLogger(InitialService.class);
 
-    private static final boolean quartzClusterEnable = false;
+    private static final boolean quartzClusterEnable = ConfigReader.getBoolean(CONSTANT.QUARTZ_CLUSTER_ENABLE);
 
-    private static boolean newPostsCheckJobEnable = true;
+    private static final boolean newPostsCheckJobEnable = ConfigReader.getBoolean(CONSTANT.SERVICE_NEWPOSTSCHECKJOB_ENABLE);
 
     @Autowired
     private ApplicationContext applicationContext;
