@@ -1,5 +1,7 @@
-package com.zachary.ticketgrabbingtool.httpclient;
+package com.zachary.ticketgrabbingtool.httpclient.client;
 
+import com.zachary.ticketgrabbingtool.httpclient.model.HeaderModel;
+import com.zachary.ticketgrabbingtool.httpclient.model.HttpClientResultModel;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -11,7 +13,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
@@ -21,20 +22,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
 @Component
 public class MyHttpClient {
 
     private static final Logger logger = LoggerFactory.getLogger(MyHttpClient.class);
 
-    public HashMap<String, Object> doGet(String url, String paramJson, HashMap<String, Object> headerMap) throws Exception {
-        // 存放response & context
-        HashMap<String, Object> resMap = new HashMap<>();
+    public HttpClientResultModel doGet(String url, String paramJson,
+                                       HttpClientResultModel httpClientResultModel, HeaderModel headerModel) throws Exception {
         HttpClient client = null;
-        if (headerMap != null && headerMap.containsKey("cookieStore") && headerMap.get("cookieStore") != null) {
-            BasicCookieStore cookieStore = (BasicCookieStore) headerMap.get("cookieStore");
-            client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
+        if (headerModel != null && headerModel.getCookieStore() != null) {
+            client = HttpClientBuilder.create().setDefaultCookieStore(headerModel.getCookieStore()).build();
         } else {
             client = HttpClients.createDefault();
         }
@@ -59,22 +57,20 @@ public class MyHttpClient {
         RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
         request.setConfig(requestConfig);
 
-        if (headerMap != null && headerMap.containsKey("headerList") && headerMap.get("headerList") != null) {
-            for(HashMap<String, String> headerItem: (List<HashMap>) headerMap.get("headerList")) {
+        if (headerModel != null && headerModel.getHeaderList() != null) {
+            for(HashMap<String, String> headerItem: headerModel.getHeaderList()) {
                 request.setHeader(headerItem.get("key"), headerItem.get("value"));
             }
         }
 
-        resMap.put("response", client.execute(request, context));
-        resMap.put("context", context);
-        return resMap;
+        httpClientResultModel.setResponse(client.execute(request, context));
+        httpClientResultModel.setContext(context);
+        return httpClientResultModel;
     }
 
-    public HashMap<String, Object> doPost(String url, HashMap<String, Object> headerMap,
-                                           String jsonStr) throws Exception {
-        HashMap<String, Object> resMap = new HashMap<>();
-        BasicCookieStore cookieStore = (BasicCookieStore) headerMap.get("cookieStore");
-        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(cookieStore).build();
+    public HttpClientResultModel doPost(String url, String jsonStr,
+                                        HttpClientResultModel httpClientResultModel, HeaderModel headerModel) throws Exception {
+        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(headerModel.getCookieStore()).build();
         HttpClientContext context = HttpClientContext.create();
         HttpPost request = new HttpPost(url);
 
@@ -82,8 +78,8 @@ public class MyHttpClient {
         RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
         request.setConfig(requestConfig);
 
-        if (headerMap != null && headerMap.containsKey("headerList") && headerMap.get("headerList") != null) {
-            for(HashMap<String, String> headerItem: (List<HashMap>) headerMap.get("headerList")) {
+        if (headerModel != null && headerModel.getHeaderList() != null) {
+            for(HashMap<String, String> headerItem: headerModel.getHeaderList()) {
                 request.setHeader(headerItem.get("key"), headerItem.get("value"));
             }
         }
@@ -97,9 +93,9 @@ public class MyHttpClient {
             request.setEntity(entity);
         }
 
-        resMap.put("response", client.execute(request, context));
-        resMap.put("context", context);
-        return resMap;
+        httpClientResultModel.setResponse(client.execute(request, context));
+        httpClientResultModel.setContext(context);
+        return httpClientResultModel;
     }
 
     public void checkResponse(HttpResponse response, String errorMsg) throws Exception {

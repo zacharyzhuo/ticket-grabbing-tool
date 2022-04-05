@@ -1,5 +1,6 @@
 package com.zachary.ticketgrabbingtool.rent591.controller;
 
+import com.zachary.ticketgrabbingtool.httpclient.model.HttpClientResultModel_Rent591;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
 import com.zachary.ticketgrabbingtool.rent591.service.Rent591Service;
@@ -11,8 +12,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
 
 @RestController()
 @RequestMapping("/rent591")
@@ -35,9 +34,10 @@ public class Rent591Controller {
         postRequestModel.setShowMore("1");
 
         try {
-            HashMap<String, Object> initResMap = rent591Service.initCookie();
-            HashMap<String, Object> postsResMap = rent591Service.getPosts(initResMap, postRequestModel);
-            PostsModel postsModel = (PostsModel) postsResMap.get("postsModel");
+            HttpClientResultModel_Rent591 httpClientResultModel = null;
+            httpClientResultModel = rent591Service.initCookie();
+            httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
+            PostsModel postsModel = httpClientResultModel.getPostsModel();
             return new ResponseEntity<>(postsModel.getPost().toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
@@ -58,16 +58,17 @@ public class Rent591Controller {
         postRequestModel.setShowMore("1");
 
         try {
-            HashMap<String, Object> initResMap = rent591Service.initCookie();
-            HashMap<String, Object> postsResMap = rent591Service.getPosts(initResMap, postRequestModel);
-            PostsModel postsModel = (PostsModel) postsResMap.get("postsModel");
+            HttpClientResultModel_Rent591 httpClientResultModel = null;
+            httpClientResultModel = rent591Service.initCookie();
+            httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
+            PostsModel postsModel = httpClientResultModel.getPostsModel();
             int n = (int) Math.ceil((double) (postsModel.getTotalRows()/postsModel.getFirstRow()));
 
-            for (int i = 0; i < n; i++) {
-                postsResMap = rent591Service.getPosts(postsResMap, postRequestModel);
+            for (int i = 1; i < n; i++) {
+                httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
             }
 
-            postsModel = (PostsModel) postsResMap.get("postsModel");
+            postsModel = httpClientResultModel.getPostsModel();
             return new ResponseEntity<>(postsModel.getPost().toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
