@@ -15,7 +15,6 @@ public class PostsModel extends AbstractEntity {
     private List<PostModel> post;
     private int firstRow;
     private int totalRows;
-    private String csrfToken;
 
     public List<PostModel> getPost() {
         return post;
@@ -43,14 +42,6 @@ public class PostsModel extends AbstractEntity {
 
     public void setTotalRows(int totalRows) {
         this.totalRows = totalRows;
-    }
-
-    public String getCsrfToken() {
-        return csrfToken;
-    }
-
-    public void setCsrfToken(String csrfToken) {
-        this.csrfToken = csrfToken;
     }
 
 }

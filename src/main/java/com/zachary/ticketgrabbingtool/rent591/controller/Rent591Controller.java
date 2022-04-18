@@ -31,17 +31,17 @@ public class Rent591Controller {
         postRequestModel.setIs_new_list("1");
         postRequestModel.setType("1");
         postRequestModel.setRegion("1");
-        postRequestModel.setShowMore("1");
 
         try {
             HttpClientResultModel_Rent591 httpClientResultModel = null;
             httpClientResultModel = rent591Service.initCookie();
+            httpClientResultModel = rent591Service.customCookie(httpClientResultModel);
             httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
             PostsModel postsModel = httpClientResultModel.getPostsModel();
-            return new ResponseEntity<>(postsModel.getPost().toString(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(postsModel.toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
-            return new ResponseEntity<>(ExceptionUtils.getStackTrace(e), headers, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.BAD_REQUEST);
         }
 
     }
@@ -55,11 +55,11 @@ public class Rent591Controller {
         postRequestModel.setIs_new_list("1");
         postRequestModel.setType("1");
         postRequestModel.setRegion("1");
-        postRequestModel.setShowMore("1");
 
         try {
             HttpClientResultModel_Rent591 httpClientResultModel = null;
             httpClientResultModel = rent591Service.initCookie();
+            httpClientResultModel = rent591Service.customCookie(httpClientResultModel);
             httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
             PostsModel postsModel = httpClientResultModel.getPostsModel();
             int n = (int) Math.ceil((double) (postsModel.getTotalRows()/postsModel.getFirstRow()));
@@ -69,10 +69,10 @@ public class Rent591Controller {
             }
 
             postsModel = httpClientResultModel.getPostsModel();
-            return new ResponseEntity<>(postsModel.getPost().toString(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(postsModel.toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
-            return new ResponseEntity<>(ExceptionUtils.getStackTrace(e), headers, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.BAD_REQUEST);
         }
     }
 

@@ -6,14 +6,11 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -29,16 +26,15 @@ public class MyHttpClient {
     private static final Logger logger = LoggerFactory.getLogger(MyHttpClient.class);
 
     public HttpClientResultModel doGet(String url, String paramJson,
-                                       HttpClientResultModel httpClientResultModel, HeaderModel headerModel) throws Exception {
-        HttpClient client = null;
-        if (headerModel != null && headerModel.getCookieStore() != null) {
-            client = HttpClientBuilder.create().setDefaultCookieStore(headerModel.getCookieStore()).build();
-        } else {
-            client = HttpClients.createDefault();
-        }
+                                       HttpClientResultModel httpClientResultModel,
+                                       HeaderModel headerModel) throws Exception {
+        HttpClient client = HttpClients.createDefault();
         HttpClientContext context = HttpClientContext.create();
-        HttpGet request = null;
+        if (headerModel.getCookieStore() != null) {
+            context.setAttribute(HttpClientContext.COOKIE_STORE, headerModel.getCookieStore());
+        }
 
+        HttpGet request = null;
         if (paramJson == null || paramJson.isEmpty()) {
             request = new HttpGet(url);
         } else {
@@ -54,8 +50,8 @@ public class MyHttpClient {
         }
 
         // 修改cookie策略，避免Invalid cookie header警告
-        RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
-        request.setConfig(requestConfig);
+//        RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
+//        request.setConfig(requestConfig);
 
         if (headerModel != null && headerModel.getHeaderList() != null) {
             for(HashMap<String, String> headerItem: headerModel.getHeaderList()) {
@@ -63,20 +59,26 @@ public class MyHttpClient {
             }
         }
 
-        httpClientResultModel.setResponse(client.execute(request, context));
+        HttpResponse response = client.execute(request, context);
+
+        httpClientResultModel.setResponse(response);
         httpClientResultModel.setContext(context);
         return httpClientResultModel;
     }
 
     public HttpClientResultModel doPost(String url, String jsonStr,
-                                        HttpClientResultModel httpClientResultModel, HeaderModel headerModel) throws Exception {
-        HttpClient client = HttpClientBuilder.create().setDefaultCookieStore(headerModel.getCookieStore()).build();
+                                        HttpClientResultModel httpClientResultModel,
+                                        HeaderModel headerModel) throws Exception {
+        HttpClient client = HttpClients.createDefault();
         HttpClientContext context = HttpClientContext.create();
-        HttpPost request = new HttpPost(url);
+        if (headerModel.getCookieStore() != null) {
+            context.setAttribute(HttpClientContext.COOKIE_STORE, headerModel.getCookieStore());
+        }
 
+        HttpPost request = new HttpPost(url);
         // 修改cookie策略，避免Invalid cookie header警告
-        RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
-        request.setConfig(requestConfig);
+//        RequestConfig requestConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
+//        request.setConfig(requestConfig);
 
         if (headerModel != null && headerModel.getHeaderList() != null) {
             for(HashMap<String, String> headerItem: headerModel.getHeaderList()) {
@@ -93,7 +95,9 @@ public class MyHttpClient {
             request.setEntity(entity);
         }
 
-        httpClientResultModel.setResponse(client.execute(request, context));
+        HttpResponse response = client.execute(request, context);
+
+        httpClientResultModel.setResponse(response);
         httpClientResultModel.setContext(context);
         return httpClientResultModel;
     }

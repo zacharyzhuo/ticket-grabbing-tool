@@ -16,10 +16,6 @@ public class PostRequestModel extends AbstractEntity {
     private String searchtype;
     // -----------------------
 
-    // 打開篩選條件時必帶 -------
-    private String showMore;
-    // -----------------------
-
     // 換頁 --------------------
     private String firstRow;
     private String totalRows;
@@ -97,14 +93,6 @@ public class PostRequestModel extends AbstractEntity {
 
     public void setSearchtype(String searchtype) {
         this.searchtype = searchtype;
-    }
-
-    public String getShowMore() {
-        return showMore;
-    }
-
-    public void setShowMore(String showMore) {
-        this.showMore = showMore;
     }
 
     public String getFirstRow() {
