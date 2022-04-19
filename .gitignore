@@ -53,7 +53,7 @@ coverage/
 src/main/resources/static/
 
 ### line messaging api channel data
-/src/main/resources/application.yml
+src/main/resources/application.yml
 
 /target/
 

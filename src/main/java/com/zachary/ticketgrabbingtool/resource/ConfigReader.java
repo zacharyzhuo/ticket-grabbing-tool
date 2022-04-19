@@ -3,20 +3,32 @@ package com.zachary.ticketgrabbingtool.resource;
 import java.util.ResourceBundle;
 
 public class ConfigReader {
+
     private static ConfigReader reader;
+    private ResourceBundle resourceBundle;
+    private ExternalConfigProvider externalConfigProvider;
+
+    private ConfigReader() {
+        // resource 底下的 .properties 檔
+        resourceBundle = ResourceBundle.getBundle("application");
+    }
 
     static {
         reader = new ConfigReader();
 
+        // 讀 application.properties 中的 config.provider 變數
         String provider = reader.resourceBundle.getString("config.provider");
 
         if (provider.equals("local")) {
             reader.setExternalConfigProvider(new LocalFileConfigProvider());
         }
-//		else if (provider.equals("db")) {
-//			reader.setExternalConfigProvider(
-//					ApplicationContextProvider.getApplicationContext().getBean(DBConfigProvider.class));
-//		}
+    }
+
+    public static String getString(String key) {
+        if (reader.resourceBundle.containsKey(key)) {
+            return reader.resourceBundle.getString(key);
+        }
+        return null;
     }
 
     public static String getString(CONSTANT key) {
@@ -61,30 +73,15 @@ public class ConfigReader {
         }
     }
 
-    public static String getString(String key) {
-        if (reader.resourceBundle.containsKey(key)) {
-            return reader.resourceBundle.getString(key);
-        }
-
-        return null;
-    }
-
     public static String getStringFromExternalProvider(String key) {
         if (reader.externalConfigProvider != null) {
             return reader.externalConfigProvider.getString(key);
         }
-
         return null;
-    }
-
-    private ResourceBundle resourceBundle;
-    private ExternalConfigProvider externalConfigProvider;
-
-    private ConfigReader() {
-        resourceBundle = ResourceBundle.getBundle("application");
     }
 
     public void setExternalConfigProvider(ExternalConfigProvider externalConfigProvider) {
         this.externalConfigProvider = externalConfigProvider;
     }
+
 }

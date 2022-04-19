@@ -4,6 +4,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.PathResource;
 import org.springframework.core.io.Resource;
 
@@ -21,7 +22,7 @@ public class LocalFileConfigProvider implements ExternalConfigProvider {
             if (properties == null) {
                 properties = new Properties();
 
-                Resource resource = new PathResource("application.properties");
+                Resource resource = new ClassPathResource("application.yml");
 
                 InputStream is = null;
 
