@@ -2,7 +2,6 @@ package com.zachary.ticketgrabbingtool.rent591.service;
 
 import com.zachary.ticketgrabbingtool.httpclient.client.MyHttpClient;
 import com.zachary.ticketgrabbingtool.httpclient.model.HeaderModel;
-import com.zachary.ticketgrabbingtool.httpclient.model.HttpClientResultModel;
 import com.zachary.ticketgrabbingtool.httpclient.model.HttpClientResultModel_Rent591;
 import com.zachary.ticketgrabbingtool.rent591.model.PostModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
@@ -159,7 +158,7 @@ public class Rent591Service {
         return httpClientResultModel;
     }
 
-    private HeaderModel prepareHeaderModel(HttpClientResultModel httpClientResultModel) throws Exception {
+    private HeaderModel prepareHeaderModel(HttpClientResultModel_Rent591 httpClientResultModel) throws Exception {
         HeaderModel headerModel = new HeaderModel();
         HttpResponse response = httpClientResultModel.getResponse();
         if (response == null) throw new Exception("response為空");

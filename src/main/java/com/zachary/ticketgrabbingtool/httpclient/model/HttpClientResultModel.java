@@ -13,7 +13,6 @@ public abstract class HttpClientResultModel extends AbstractEntity {
 
     private HttpResponse response;
     private HttpClientContext context;
-    private String csrfToken;
 
     public HttpResponse getResponse() {
         return response;
@@ -29,14 +28,6 @@ public abstract class HttpClientResultModel extends AbstractEntity {
 
     public void setContext(HttpClientContext context) {
         this.context = context;
-    }
-
-    public String getCsrfToken() {
-        return csrfToken;
-    }
-
-    public void setCsrfToken(String csrfToken) {
-        this.csrfToken = csrfToken;
     }
 
 }
