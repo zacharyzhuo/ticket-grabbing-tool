@@ -15,6 +15,9 @@ public enum CONSTANT {
 
     LINE_BOT_CHANNEL_TOKEN("line.bot.channel-token"),
     LINE_BOT_ADMIN_USERID("line.bot.admin.userId"),
+    LINE_BOT_WAN_USERID("line.bot.wan.userId"),
+    LINE_BOT_URL("line.bot.url"),
+
     ;
 
     private final String str;
