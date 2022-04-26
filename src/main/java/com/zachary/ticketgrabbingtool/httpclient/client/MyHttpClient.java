@@ -91,7 +91,8 @@ public class MyHttpClient {
             request.setHeader("Content-type", "application/json");
 
             // set json params
-            StringEntity entity = new StringEntity(jsonStr);
+            // 要加上utf-8才能塞入中文內容
+            StringEntity entity = new StringEntity(jsonStr, "UTF-8");
             request.setEntity(entity);
         }
 

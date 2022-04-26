@@ -2,8 +2,9 @@ package com.zachary.ticketgrabbingtool.rent591.controller;
 
 import com.zachary.ticketgrabbingtool.httpclient.model.HttpClientResultModel_Rent591;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
-import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
 import com.zachary.ticketgrabbingtool.rent591.service.Rent591Service;
+import com.zachary.ticketgrabbingtool.resource.CONSTANT;
+import com.zachary.ticketgrabbingtool.resource.ConfigReader;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,8 @@ public class Rent591Controller {
 
     private static final Logger logger = LoggerFactory.getLogger(Rent591Controller.class);
 
+    private static final String LINE_BOT_ADMIN_USERID = ConfigReader.getString(CONSTANT.LINE_BOT_ADMIN_USERID, true);
+
     @Autowired
     Rent591Service rent591Service;
 
@@ -33,12 +36,8 @@ public class Rent591Controller {
         postRequestModel.setRegion("1");
 
         try {
-            HttpClientResultModel_Rent591 httpClientResultModel = null;
-            httpClientResultModel = rent591Service.initCookie();
-            httpClientResultModel = rent591Service.customCookie(httpClientResultModel);
-            httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
-            PostsModel postsModel = httpClientResultModel.getPostsModel();
-            return new ResponseEntity<>(postsModel.toString(), headers, HttpStatus.OK);
+            HttpClientResultModel_Rent591 res = rent591Service.getPosts(postRequestModel);
+            return new ResponseEntity<>(res.getPostsModel().toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.BAD_REQUEST);
@@ -57,19 +56,8 @@ public class Rent591Controller {
         postRequestModel.setRegion("1");
 
         try {
-            HttpClientResultModel_Rent591 httpClientResultModel = null;
-            httpClientResultModel = rent591Service.initCookie();
-            httpClientResultModel = rent591Service.customCookie(httpClientResultModel);
-            httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
-            PostsModel postsModel = httpClientResultModel.getPostsModel();
-            int n = (int) Math.ceil((double) (postsModel.getTotalRows()/postsModel.getFirstRow()));
-
-            for (int i = 1; i < n; i++) {
-                httpClientResultModel = rent591Service.getPosts(httpClientResultModel, postRequestModel);
-            }
-
-            postsModel = httpClientResultModel.getPostsModel();
-            return new ResponseEntity<>(postsModel.toString(), headers, HttpStatus.OK);
+            HttpClientResultModel_Rent591 res = rent591Service.getAllPosts(postRequestModel);
+            return new ResponseEntity<>(res.getPostsModel().toString(), headers, HttpStatus.OK);
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e));
             return new ResponseEntity<>(e.getMessage(), headers, HttpStatus.BAD_REQUEST);

@@ -3,6 +3,10 @@ package com.zachary.ticketgrabbingtool.rent591.service;
 import com.zachary.ticketgrabbingtool.httpclient.client.MyHttpClient;
 import com.zachary.ticketgrabbingtool.httpclient.model.HeaderModel;
 import com.zachary.ticketgrabbingtool.httpclient.model.HttpClientResultModel_Rent591;
+import com.zachary.ticketgrabbingtool.line.model.FlexMessageModel;
+import com.zachary.ticketgrabbingtool.line.model.IMessageModel;
+import com.zachary.ticketgrabbingtool.line.model.PushModel;
+import com.zachary.ticketgrabbingtool.line.model.flex.*;
 import com.zachary.ticketgrabbingtool.rent591.model.PostModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
@@ -33,12 +37,179 @@ public class Rent591Service {
 
     private static final Logger logger = LoggerFactory.getLogger(Rent591Service.class);
 
-    private static final String URL = ConfigReader.getString(CONSTANT.RENT_591);
+    private static final String URL = ConfigReader.getString(CONSTANT.RENT_591_URL);
     private static final String USER_AGENT = ConfigReader.getString(CONSTANT.USER_AGENT);
     private static final String RENT_591_URLJUMPIP = ConfigReader.getString(CONSTANT.RENT_591_URLJUMPIP);
+    private static final String RENT_591_URL = ConfigReader.getString(CONSTANT.RENT_591_URL);
+    private static final String RENT_591_NOTFOUND_IMAGE = ConfigReader.getString(CONSTANT.RENT_591_NOTFOUND_IMAGE);
+
+    private static final String ALTER_TEXT = "最新租屋資訊來囉~";
 
     @Autowired
     private MyHttpClient myHttpClient;
+
+    public HttpClientResultModel_Rent591 getPosts(PostRequestModel postRequestModel) throws Exception {
+        HttpClientResultModel_Rent591 httpClientResultModel = null;
+        httpClientResultModel = initCookie();
+        httpClientResultModel = customCookie(httpClientResultModel);
+        httpClientResultModel = getPostsData(httpClientResultModel, postRequestModel);
+        return httpClientResultModel;
+    }
+
+    public HttpClientResultModel_Rent591 getAllPosts(PostRequestModel postRequestModel) throws Exception {
+        HttpClientResultModel_Rent591 httpClientResultModel = null;
+        httpClientResultModel = getPosts(postRequestModel);
+        PostsModel postsModel = httpClientResultModel.getPostsModel();
+        int n = (int) Math.ceil((double) (postsModel.getTotalRows()/postsModel.getFirstRow()));
+
+        for (int i = 1; i < n; i++) {
+            httpClientResultModel = getPostsData(httpClientResultModel, postRequestModel);
+        }
+
+        return httpClientResultModel;
+    }
+
+    public List<BubbleModel> buildBubbles(List<PostModel> posts) {
+//        logger.info("[top 10 posts]: {}", posts);
+        List<BubbleModel> bubbles = new ArrayList<>();
+        HashMap<String, TextModel> textTitleMap = new HashMap<>();
+        List<TextModel> texts = new ArrayList<>();
+
+        for (int i = 0; i < TextModel.TITLE_KEY.size(); i++) {
+            TextModel textModel = new TextModel();
+            textModel.setType(TextModel.TYPE);
+            textModel.setText(TextModel.TITLE_VALUE.get(i));
+            textModel.setColor(TextModel.COLOR.get(0));
+            textModel.setSize(TextModel.SIZE.get(1));
+            textModel.setFlex(1);
+            textTitleMap.put(TextModel.TITLE_KEY.get(i), textModel);
+        }
+
+        // each bubble
+        for(PostModel post: posts) {
+            String aspectRatio = "150:98";
+            List<ImageModel> images = new ArrayList<>();
+            HashMap<String, BoxModel> boxMap = new HashMap<>();
+
+            BoxModel imageVerticalBox = new BoxModel();
+            imageVerticalBox.setType(BoxModel.TYPE);
+            imageVerticalBox.setLayout(BoxModel.LAYOUT.get(0));
+            imageVerticalBox.setContents(new ArrayList<IBoxContent>());
+
+            int img_index = 0;
+            for (int i = 0; i < 2; i++) {
+                BoxModel imageHorizontalBox = new BoxModel();
+                imageHorizontalBox.setType(BoxModel.TYPE);
+                imageHorizontalBox.setLayout(BoxModel.LAYOUT.get(1));
+                imageHorizontalBox.setContents(new ArrayList<IBoxContent>());
+
+                for (int j = 0; j < 2; j++) {
+                    ImageModel image = new ImageModel();
+                    try {
+                        image.setUrl(post.getPhotoList().get(img_index++));
+                    } catch (IndexOutOfBoundsException e) {
+                        image.setUrl(RENT_591_NOTFOUND_IMAGE);
+                    } finally {
+                        image.setType(ImageModel.TYPE);
+                        image.setGravity(ImageModel.GRAVITY.get(0));
+                        image.setSize(ImageModel.SIZE.get(0));
+                        image.setAspectMode(ImageModel.ASPECT_MODE.get(0));
+                        image.setAspectRatio(aspectRatio);
+                    }
+                    imageHorizontalBox.addContents(image);
+                }
+                imageVerticalBox.addContents(imageHorizontalBox);
+            }
+
+            BoxModel allTextBox = new BoxModel();
+            allTextBox.setType(BoxModel.TYPE);
+            allTextBox.setLayout(BoxModel.LAYOUT.get(0));
+            allTextBox.setMargin(BoxModel.MARGIN.get(0));
+            allTextBox.setSpacing(BoxModel.SPACING.get(0));
+            allTextBox.setPaddingStart("20px");
+            allTextBox.setPaddingBottom("20px");
+            allTextBox.setContents(new ArrayList<IBoxContent>());
+
+            for (String titleKey : TextModel.TITLE_KEY) {
+                TextModel textModel = new TextModel();
+                textModel.setType(TextModel.TYPE);
+                if (titleKey.equals("price")) {
+                    textModel.setText(post.getPrice());
+                } else if (titleKey.equals("address")) {
+                    textModel.setText(post.getLocation());
+                } else if (titleKey.equals("section")) {
+                    textModel.setText(post.getSection());
+                } else if (titleKey.equals("kind")) {
+                    textModel.setText(post.getKind());
+                } else if (titleKey.equals("floor")) {
+                    textModel.setText(post.getFloor());
+                } else if (titleKey.equals("area")) {
+                    textModel.setText(post.getArea());
+                }
+                textModel.setWrap(true);
+                textModel.setColor(TextModel.COLOR.get(1));
+                textModel.setFlex(5);
+
+                BoxModel textBox = new BoxModel();
+                textBox.setType(BoxModel.TYPE);
+                textBox.setLayout(BoxModel.LAYOUT.get(2));
+                textBox.setContents(new ArrayList<IBoxContent>(Arrays.asList(
+                        textTitleMap.get(titleKey), textModel)));
+
+                allTextBox.addContents(textBox);
+            }
+
+            TextModel title = new TextModel();
+            title.setType(TextModel.TYPE);
+            title.setText(post.getTitle());
+            title.setWeight(TextModel.WEIGHT.get(0));
+            title.setSize(TextModel.SIZE.get(0));
+
+            BoxModel titleVerticalBox = new BoxModel();
+            titleVerticalBox.setType(BoxModel.TYPE);
+            titleVerticalBox.setLayout(BoxModel.LAYOUT.get(0));
+            titleVerticalBox.setPaddingStart("20px");
+            titleVerticalBox.setPaddingTop("20px");
+            titleVerticalBox.setContents(new ArrayList<IBoxContent>(Arrays.asList(title)));
+
+            ActionModel actionModel = new ActionModel();
+            actionModel.setType(ActionModel.TYPE);
+            actionModel.setLabel("Website");
+            actionModel.setUri(RENT_591_URL+"/home/"+post.getPostId());
+
+            BoxModel body = new BoxModel();
+            body.setType(BoxModel.TYPE);
+            body.setLayout(BoxModel.LAYOUT.get(0));
+            body.setPaddingAll("0px");
+            body.setAction(actionModel);
+            body.setContents(new ArrayList<IBoxContent>(Arrays.asList(
+                    imageVerticalBox, titleVerticalBox, allTextBox)));
+
+            BubbleModel bubbleModel = new BubbleModel();
+            bubbleModel.setType(BubbleModel.TYPE);
+            bubbleModel.setBody(body);
+
+            bubbles.add(bubbleModel);
+        }
+
+        return bubbles;
+    }
+
+    public PushModel buildPushModel(List<BubbleModel> bubbles) {
+        CarouselModel carouselModel = new CarouselModel();
+        carouselModel.setType(CarouselModel.TYPE);
+        carouselModel.setContents(bubbles);
+
+        FlexMessageModel flexMessageModel = new FlexMessageModel();
+        flexMessageModel.setType(FlexMessageModel.TYPE);
+        flexMessageModel.setAltText(ALTER_TEXT);
+        flexMessageModel.setContents(carouselModel);
+
+        PushModel pushModel = new PushModel();
+        pushModel.setMessages(new ArrayList<IMessageModel>(Arrays.asList(flexMessageModel)));
+
+        return pushModel;
+    }
 
     private HttpClientResultModel_Rent591 homePage(HttpClientResultModel_Rent591 resourceHttpClientResultModel)
             throws Exception {
@@ -90,8 +261,8 @@ public class Rent591Service {
         return homePage(resourceHttpClientResultModel);
     }
 
-    public HttpClientResultModel_Rent591 getPosts(HttpClientResultModel_Rent591 resourceHttpClientResultModel,
-                                          PostRequestModel postRequestModel) throws Exception {
+    public HttpClientResultModel_Rent591 getPostsData(HttpClientResultModel_Rent591 resourceHttpClientResultModel,
+                                                      PostRequestModel postRequestModel) throws Exception {
         logger.info("取得前30篇貼文");
         String url = URL + "/home/search/rsList";
         HeaderModel headerModel = prepareHeaderModel(resourceHttpClientResultModel);
@@ -142,7 +313,7 @@ public class Rent591Service {
             postsModel = new PostsModel();
             postsModel.setFirstRow(PostsModel.A_BATCH_POST_UNIT);
             postsModel.setTotalRows(records);
-            postsModel.setPost(PostModelList);
+            postsModel.setPosts(PostModelList);
         } else {
             int firstRow = postsModel.getFirstRow() + PostsModel.A_BATCH_POST_UNIT;
             postsModel.setFirstRow(firstRow);

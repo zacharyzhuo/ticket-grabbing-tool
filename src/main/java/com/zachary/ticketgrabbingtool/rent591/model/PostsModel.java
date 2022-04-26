@@ -12,20 +12,20 @@ public class PostsModel extends AbstractEntity {
 
     public static final int A_BATCH_POST_UNIT = 30;
 
-    private List<PostModel> post;
+    private List<PostModel> posts;
     private int firstRow;
     private int totalRows;
 
-    public List<PostModel> getPost() {
-        return post;
+    public List<PostModel> getPosts() {
+        return posts;
     }
 
-    public void setPost(List<PostModel> post) {
-        this.post = post;
+    public void setPosts(List<PostModel> posts) {
+        this.posts = posts;
     }
 
     public void addPost(List<PostModel> post) {
-        this.post.addAll(post);
+        this.posts.addAll(post);
     }
 
     public int getFirstRow() {

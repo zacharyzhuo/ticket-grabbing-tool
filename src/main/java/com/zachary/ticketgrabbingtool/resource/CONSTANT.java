@@ -6,8 +6,9 @@ public enum CONSTANT {
     COMMIME_URL("commime.url"),
     COMMIME_USER_LOCALECODE("commime.user.localeCode"),
 
-    RENT_591("rent591.url"),
+    RENT_591_URL("rent591.url"),
     RENT_591_URLJUMPIP("rent591.urlJumpIp"),
+    RENT_591_NOTFOUND_IMAGE("rent591.notFound.image"),
 
     QUARTZ_CLUSTER_ENABLE("quartz.cluster.enable"),
     SERVICE_NEWPOSTSCHECKJOB_ENABLE("service.newPostsCheckJob.enable"),
