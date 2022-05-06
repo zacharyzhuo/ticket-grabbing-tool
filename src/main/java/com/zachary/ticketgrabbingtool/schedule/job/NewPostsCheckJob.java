@@ -5,6 +5,7 @@ import com.zachary.ticketgrabbingtool.line.model.FlexMessageModel;
 import com.zachary.ticketgrabbingtool.line.model.IMessageModel;
 import com.zachary.ticketgrabbingtool.line.model.PushModel;
 import com.zachary.ticketgrabbingtool.line.model.flex.*;
+import com.zachary.ticketgrabbingtool.rent591.cache.CacheDelegate;
 import com.zachary.ticketgrabbingtool.rent591.model.PostModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostRequestModel;
 import com.zachary.ticketgrabbingtool.rent591.model.PostsModel;
@@ -17,7 +18,6 @@ import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.*;
 
 public class NewPostsCheckJob implements org.quartz.Job {
@@ -30,6 +30,7 @@ public class NewPostsCheckJob implements org.quartz.Job {
     private static final String LINE_BOT_WAN_USERID = ConfigReader.getString(CONSTANT.LINE_BOT_WAN_USERID, true);
 
     private static final String ALTER_TEXT = "最新租屋資訊來囉~";
+    private static final String NULL_POST_MESSAGE = "目前沒有最新貼文~";
 
     @Autowired
     Rent591Service rent591Service;
@@ -45,15 +46,22 @@ public class NewPostsCheckJob implements org.quartz.Job {
         PostsModel postsModel = getPosts(postRequestModel);
 
         if (postsModel != null) {
-            PushModel pushModel = rent591Service.buildPushModel(rent591Service.buildBubbles(filter(postsModel)));
-//            PushModel pushModel = mockBuildCarouselMsg();
-//            PushModel pushModel = mockBuildBubbleMsg();
+            List<PostModel> posts = filter(postsModel);
+            List<BubbleModel> bubbles = null;
+
+            if (posts.size() == 0) {
+                bubbles = buildNullPostMessageBubble();
+            } else {
+                bubbles = rent591Service.buildBubbles(posts);
+            }
+
+            PushModel pushModel = rent591Service.buildPushModel(bubbles);
 
             List<String> pushTargets = new ArrayList<>();
             pushTargets.add(LINE_BOT_ADMIN_USERID);
-//            pushTargets.add(LINE_BOT_WAN_USERID);
+            pushTargets.add(LINE_BOT_WAN_USERID);
 
-            for(String to: pushTargets) {
+            for (String to : pushTargets) {
                 pushModel.setTo(to);
                 pushLineMessage(pushModel);
             }
@@ -68,13 +76,13 @@ public class NewPostsCheckJob implements org.quartz.Job {
         postRequestModel.setRegion("1");
 
         postRequestModel.setKind("2");
-        postRequestModel.setSection("5,7,4");
+        postRequestModel.setSection("3,5,7,4");
         postRequestModel.setRentprice("13000,20000");
         postRequestModel.setMultiNotice("all_sex,not_cover");
         postRequestModel.setShape("1,2");
-        postRequestModel.setArea("7,15");
-        postRequestModel.setOrder("posttime");
-        postRequestModel.setOrderType("desc");
+        postRequestModel.setArea("8,15");
+//        postRequestModel.setOrder("posttime");
+//        postRequestModel.setOrderType("desc");
 
         return postRequestModel;
     }
@@ -89,8 +97,43 @@ public class NewPostsCheckJob implements org.quartz.Job {
     }
 
     private List<PostModel> filter(PostsModel postsModel) {
-        // 取前十
-        return postsModel.getPosts().subList(0, 10);
+        List<PostModel> posts = new ArrayList<>();
+
+        for (PostModel post : postsModel.getPosts()) {
+            PostModel newPost = CacheDelegate.getInstance().getPostModel(String.valueOf(post.getPostId()));
+            if (newPost == null) {
+                posts.add(post);
+                CacheDelegate.getInstance().putPostModel(String.valueOf(post.getPostId()), post);
+            }
+
+            // 只取10個
+            if (posts.size() == 10) {
+                break;
+            }
+        }
+        return posts;
+    }
+
+    private List<BubbleModel> buildNullPostMessageBubble() {
+        TextModel text = new TextModel();
+        text.setType(TextModel.TYPE);
+        text.setText(NULL_POST_MESSAGE);
+        text.setWeight(TextModel.WEIGHT.get(0));
+        text.setAlign(TextModel.ALIGN.get(0));
+
+        BoxModel body = new BoxModel();
+        body.setType(BoxModel.TYPE);
+        body.setLayout(BoxModel.LAYOUT.get(0));
+        body.setContents(new ArrayList<IBoxContent>(Arrays.asList(text)));
+
+        BubbleModel bubbleModel = new BubbleModel();
+        bubbleModel.setType(BubbleModel.TYPE);
+        bubbleModel.setBody(body);
+
+        List<BubbleModel> bubbles = new ArrayList<>();
+        bubbles.add(bubbleModel);
+
+        return bubbles;
     }
 
     private PushModel mockBuildCarouselMsg() {

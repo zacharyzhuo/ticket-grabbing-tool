@@ -20,6 +20,7 @@ public class TextModel extends AbstractEntity implements IBoxContent {
     public static final List<String> WEIGHT = new ArrayList<>(Arrays.asList("bold"));
     public static final List<String> SIZE = new ArrayList<>(Arrays.asList("md", "sm"));
     public static final List<String> COLOR = new ArrayList<>(Arrays.asList("#aaaaaa", "#666666"));
+    public static final List<String> ALIGN = new ArrayList<>(Arrays.asList("center"));
 
     private String type;
     private String text;
@@ -28,6 +29,7 @@ public class TextModel extends AbstractEntity implements IBoxContent {
     private String color;
     private Integer flex;
     private Boolean wrap;
+    private String align;
 
     public String getType() {
         return type;
@@ -85,4 +87,11 @@ public class TextModel extends AbstractEntity implements IBoxContent {
         this.wrap = wrap;
     }
 
+    public String getAlign() {
+        return align;
+    }
+
+    public void setAlign(String align) {
+        this.align = align;
+    }
 }

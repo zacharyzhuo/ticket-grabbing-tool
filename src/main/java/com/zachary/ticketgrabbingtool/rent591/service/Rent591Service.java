@@ -86,7 +86,7 @@ public class Rent591Service {
         }
 
         // each bubble
-        for(PostModel post: posts) {
+        for (PostModel post: posts) {
             String aspectRatio = "150:98";
             List<ImageModel> images = new ArrayList<>();
             HashMap<String, BoxModel> boxMap = new HashMap<>();
